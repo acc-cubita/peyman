@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { categories } from "@/data/categories";
 import { products } from "@/data/products";
 import { normalizeText } from "./format";
-import type { Category, CategoryGroup, Product, SortKey } from "./types";
+import type { CartCatalog, Category, CategoryGroup, Product, SortKey } from "./types";
 
 /*
  * Catalog reads. Everything is served from the local sample data for now;
@@ -84,6 +84,30 @@ export async function getRelatedProducts(slug: string, limit = 4) {
     (p) => p.category !== product.category && categoryOf(p).group === group,
   );
   return [...sameCategory, ...sameGroup].slice(0, limit);
+}
+
+/** Price list shipped to the browser for the cart and checkout pages. */
+export async function getCartCatalog(): Promise<CartCatalog> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("catalog");
+  return Object.fromEntries(
+    products.map((p) => {
+      const category = categoryOf(p);
+      return [
+        p.slug,
+        {
+          slug: p.slug,
+          name: p.name,
+          sku: p.sku,
+          price: p.price,
+          stock: p.stock,
+          icon: category.icon,
+          onBoard: category.group === "components",
+        },
+      ];
+    }),
+  );
 }
 
 export async function searchProducts(query: string) {

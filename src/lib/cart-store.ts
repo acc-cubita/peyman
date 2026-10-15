@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { CartCatalog } from "./types";
 
 export type CartLine = { slug: string; qty: number };
 
@@ -61,8 +62,26 @@ function subscribe(listener: () => void) {
   };
 }
 
+const noopSubscribe = () => () => {};
+
+/**
+ * False during server render and hydration, true afterwards. Lets cart views
+ * show a placeholder instead of flashing "your cart is empty".
+ */
+export function useHydrated() {
+  return useSyncExternalStore(noopSubscribe, () => true, () => false);
+}
+
 export function useCart() {
   return useSyncExternalStore(subscribe, current, () => EMPTY);
+}
+
+/** Cart lines joined with current prices; unavailable items drop out and quantities cap at stock. */
+export function useCartLines(catalog: CartCatalog) {
+  return useCart().flatMap((line) => {
+    const item = catalog[line.slug];
+    return item && item.stock > 0 ? [{ ...item, qty: Math.min(line.qty, item.stock) }] : [];
+  });
 }
 
 export function useCartCount() {
@@ -94,4 +113,20 @@ export function setQuantity(slug: string, qty: number) {
 
 export function removeFromCart(slug: string) {
   commit(current().filter((line) => line.slug !== slug));
+}
+
+const CLEARED_KEY = "peyman-cart:cleared-for";
+
+/**
+ * Empties the cart once per paid order, so revisiting an old receipt does
+ * not wipe items added since.
+ */
+export function clearCartForOrder(orderId: string) {
+  try {
+    if (localStorage.getItem(CLEARED_KEY) === orderId) return;
+    localStorage.setItem(CLEARED_KEY, orderId);
+  } catch {
+    // Without storage the guard is lost, but clearing is still correct.
+  }
+  commit([]);
 }

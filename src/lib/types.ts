@@ -49,3 +49,16 @@ export type Product = {
 };
 
 export type SortKey = "featured" | "price-asc" | "price-desc" | "rating";
+
+/** The slice of a product the browser-side cart and checkout need. */
+export type CartCatalogItem = {
+  slug: string;
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+  icon: IconKey;
+  onBoard: boolean;
+};
+
+export type CartCatalog = Record<string, CartCatalogItem>;

@@ -2,35 +2,19 @@
 
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { removeFromCart, setQuantity, useCart } from "@/lib/cart-store";
+import { removeFromCart, setQuantity, useCartLines, useHydrated } from "@/lib/cart-store";
 import { cx } from "@/lib/cx";
 import { faNumber, formatToman } from "@/lib/format";
-import type { IconKey } from "@/lib/types";
+import { orderTotals } from "@/lib/pricing";
+import { site } from "@/lib/site";
+import type { CartCatalog } from "@/lib/types";
 import { CategoryIcon } from "./category-icon";
 
-export type CartCatalogItem = {
-  slug: string;
-  name: string;
-  sku: string;
-  price: number;
-  stock: number;
-  icon: IconKey;
-  onBoard: boolean;
-};
+export function CartView({ catalog }: { catalog: CartCatalog }) {
+  const lines = useCartLines(catalog);
+  const hydrated = useHydrated();
 
-export function CartView({
-  catalog,
-  freeShippingFrom,
-  shippingFee,
-}: {
-  catalog: Record<string, CartCatalogItem>;
-  freeShippingFrom: number;
-  shippingFee: number;
-}) {
-  const lines = useCart().flatMap((line) => {
-    const item = catalog[line.slug];
-    return item ? [{ ...item, qty: Math.min(line.qty, item.stock) }] : [];
-  });
+  if (!hydrated) return <CartSkeleton />;
 
   if (lines.length === 0) {
     return (
@@ -45,9 +29,7 @@ export function CartView({
     );
   }
 
-  const subtotal = lines.reduce((sum, line) => sum + line.price * line.qty, 0);
-  const shipping = subtotal >= freeShippingFrom ? 0 : shippingFee;
-  const count = lines.reduce((sum, line) => sum + line.qty, 0);
+  const { count, subtotal, shipping, total } = orderTotals(lines);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
@@ -121,12 +103,12 @@ export function CartView({
           </div>
           <div className="flex justify-between border-t border-line pt-3 text-base font-semibold">
             <dt>مبلغ قابل پرداخت</dt>
-            <dd className="tabular-nums">{formatToman(subtotal + shipping)}</dd>
+            <dd className="tabular-nums">{formatToman(total)}</dd>
           </div>
         </dl>
         {shipping > 0 && (
           <p className="rounded-xl bg-silk px-3 py-2 text-xs leading-6 text-muted">
-            با {formatToman(freeShippingFrom - subtotal)} خرید بیشتر، ارسال رایگان می‌شود.
+            با {formatToman(site.freeShippingFrom - subtotal)} خرید بیشتر، ارسال رایگان می‌شود.
           </p>
         )}
         <Link
@@ -136,6 +118,15 @@ export function CartView({
           ادامه فرایند خرید
         </Link>
       </aside>
+    </div>
+  );
+}
+
+export function CartSkeleton() {
+  return (
+    <div aria-hidden className="grid gap-8 lg:grid-cols-[1fr_22rem]">
+      <div className="h-56 rounded-2xl bg-line/50" />
+      <div className="h-56 rounded-2xl bg-line/50" />
     </div>
   );
 }

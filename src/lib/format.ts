@@ -15,13 +15,27 @@ export function discountPercent(price: number, compareAtPrice?: number) {
 const persianDigits = /[۰-۹]/g;
 const arabicDigits = /[٠-٩]/g;
 
+/** Converts Persian and Arabic-Indic digits to ASCII, e.g. for phone numbers. */
+export function toLatinDigits(value: string) {
+  return value
+    .replace(persianDigits, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(arabicDigits, (d) => String(d.charCodeAt(0) - 0x0660));
+}
+
+const dateTime = new Intl.DateTimeFormat("fa-IR", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Asia/Tehran",
+});
+
+/** Solar Hijri date and Tehran time, e.g. «۲۳ مهر ۱۴۰۵، ۱۴:۰۵». */
+export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
+
 /** Folds Arabic letter variants and Eastern digits so searches match. */
 export function normalizeText(value: string) {
-  return value
+  return toLatinDigits(value)
     .replace(/ي/g, "ی")
     .replace(/ك/g, "ک")
-    .replace(persianDigits, (d) => String(d.charCodeAt(0) - 0x06f0))
-    .replace(arabicDigits, (d) => String(d.charCodeAt(0) - 0x0660))
     .replace(/‌/g, " ")
     .toLowerCase()
     .replace(/\s+/g, " ")
