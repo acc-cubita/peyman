@@ -1,0 +1,29 @@
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{SITE_URL}}/{{LOCALE}}/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{CATEGORY_NAME}}",
+      "item": "{{SITE_URL}}/{{LOCALE}}/categories/{{CATEGORY_SLUG}}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{SUBCATEGORY_NAME}}",
+      "item": "{{SITE_URL}}/{{LOCALE}}/categories/{{CATEGORY_SLUG}}/{{SUBCATEGORY_SLUG}}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 4,
+      "name": "{{CURRENT_PAGE_NAME}}"
+    }
+  ]
+}

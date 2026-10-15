@@ -1,0 +1,44 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{PRODUCT_NAME}} {{PRODUCT_MODEL}}",
+  "description": "{{PRODUCT_DESCRIPTION}}",
+  "sku": "{{SKU}}",
+  "mpn": "{{MPN}}",
+  "gtin13": "{{GTIN13}}",
+  "brand": {
+    "@type": "Brand",
+    "name": "{{BRAND_NAME}}"
+  },
+  "image": [
+    "{{IMAGE_URL_1}}",
+    "{{IMAGE_URL_2}}"
+  ],
+  "url": "{{SITE_URL}}/{{LOCALE}}/products/{{PRODUCT_ID}}/{{PRODUCT_SLUG}}",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{PRICE_NUMBER}}",
+    "priceCurrency": "{{CURRENCY_ISO_4217}}",
+    "availability": "https://schema.org/InStock",
+    "itemCondition": "https://schema.org/NewCondition",
+    "seller": {
+      "@type": "Organization",
+      "name": "{{BRAND_NAME}}"
+    },
+    "url": "{{SITE_URL}}/{{LOCALE}}/products/{{PRODUCT_ID}}/{{PRODUCT_SLUG}}"
+  },
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "{{SPEC_NAME_1}}",
+      "value": "{{SPEC_VALUE_1}}",
+      "unitCode": "{{UNIT_CODE_1}}"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "{{SPEC_NAME_2}}",
+      "value": "{{SPEC_VALUE_2}}",
+      "unitCode": "{{UNIT_CODE_2}}"
+    }
+  ]
+}
