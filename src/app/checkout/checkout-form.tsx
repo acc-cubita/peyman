@@ -2,7 +2,8 @@
 
 import { LockKeyhole } from "lucide-react";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 import { CartSkeleton } from "@/components/cart-view";
 import { useCartLines, useHydrated } from "@/lib/cart-store";
 import { cx } from "@/lib/cx";
@@ -17,6 +18,13 @@ export function CheckoutForm({ catalog, provinces }: { catalog: CartCatalog; pro
   const lines = useCartLines(catalog);
   const hydrated = useHydrated();
   const [state, formAction, pending] = useActionState(placeOrder, initialState);
+  const router = useRouter();
+
+  // The server refused because prices moved: reload the price list so the
+  // summary shows the amount the next submit will charge.
+  useEffect(() => {
+    if (state.pricesChanged) router.refresh();
+  }, [state, router]);
 
   if (!hydrated) return <CartSkeleton />;
 
@@ -38,6 +46,7 @@ export function CheckoutForm({ catalog, provinces }: { catalog: CartCatalog; pro
   return (
     <form action={formAction} className="grid gap-8 lg:grid-cols-[1fr_22rem]">
       <input type="hidden" name="cart" value={JSON.stringify(lines.map(({ slug, qty }) => ({ slug, qty })))} />
+      <input type="hidden" name="expectedTotal" value={total} />
 
       <fieldset disabled={pending} className="min-w-0 space-y-6 rounded-2xl bg-surface p-5 ring-1 ring-line sm:p-7">
         <legend className="sr-only">مشخصات گیرنده</legend>

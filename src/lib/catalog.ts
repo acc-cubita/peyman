@@ -1,96 +1,93 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { categories } from "@/data/categories";
-import { products } from "@/data/products";
+import { categoryOf, findCategory } from "./categories";
 import { normalizeText } from "./format";
-import type { CartCatalog, Category, CategoryGroup, Product, SortKey } from "./types";
+import { listProducts } from "./products";
+import type { CartCatalog, CategoryGroup, Product, SortKey } from "./types";
 
 /*
- * Catalog reads. Everything is served from the local sample data for now;
- * the async + "use cache" shape lets a database replace it without touching
- * the pages that call these functions.
+ * Cached storefront reads. Products come from the database (active ones
+ * only); everything here is tagged "catalog", which admin edits and paid
+ * orders invalidate. Categories are fixed in code.
  */
 
-const categoryMap = new Map(categories.map((c) => [c.slug, c]));
+export const CATALOG_TAG = "catalog";
 
-/** Synchronous lookup for components that already hold a product. */
-export function categoryOf(product: Pick<Product, "category">): Category {
-  const category = categoryMap.get(product.category);
-  if (!category) throw new Error(`Unknown category: ${product.category}`);
-  return category;
+export { categoryOf };
+
+// Admin edits and paid orders invalidate the tag immediately; the short
+// lifetime bounds staleness if an invalidation is ever missed (e.g. a restart).
+function cached() {
+  cacheLife("minutes");
+  cacheTag(CATALOG_TAG);
 }
 
 export async function getCategories(group?: CategoryGroup) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
+  cached();
   return group ? categories.filter((c) => c.group === group) : [...categories];
 }
 
 export async function getCategory(slug: string) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
-  return categoryMap.get(slug) ?? null;
+  cached();
+  return findCategory(slug);
 }
 
 export async function getCategoryCounts() {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
+  cached();
   const counts: Record<string, number> = {};
-  for (const p of products) counts[p.category] = (counts[p.category] ?? 0) + 1;
+  for (const p of listProducts()) counts[p.category] = (counts[p.category] ?? 0) + 1;
   return counts;
 }
 
 export async function getProducts() {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
-  return [...products];
+  cached();
+  return listProducts();
 }
 
 export async function getProduct(slug: string) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
-  return products.find((p) => p.slug === slug) ?? null;
+  cached();
+  return listProducts().find((p) => p.slug === slug) ?? null;
 }
 
 export async function getProductsByCategory(slug: string) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
-  return products.filter((p) => p.category === slug);
+  cached();
+  return listProducts().filter((p) => p.category === slug);
 }
 
 export async function getFeaturedProducts(group: CategoryGroup) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
-  return products.filter((p) => p.featured && categoryOf(p).group === group);
+  cached();
+  return listProducts()
+    .filter((p) => p.featured && p.stock > 0 && categoryOf(p).group === group)
+    .slice(0, 8);
 }
 
 /** Same-category products first, then the rest of the department. */
 export async function getRelatedProducts(slug: string, limit = 4) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
+  cached();
+  const products = listProducts();
   const product = products.find((p) => p.slug === slug);
   if (!product) return [];
   const group = categoryOf(product).group;
   const others = products.filter((p) => p.slug !== slug && p.stock > 0);
   const sameCategory = others.filter((p) => p.category === product.category);
-  const sameGroup = others.filter(
-    (p) => p.category !== product.category && categoryOf(p).group === group,
-  );
+  const sameGroup = others.filter((p) => p.category !== product.category && categoryOf(p).group === group);
   return [...sameCategory, ...sameGroup].slice(0, limit);
 }
 
-/** Price list shipped to the browser for the cart and checkout pages. */
-export async function getCartCatalog(): Promise<CartCatalog> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
+/**
+ * Price list shipped to the browser for the cart and checkout pages. Those
+ * pages build it from a fresh database read so the total a customer sees is
+ * the total they are charged.
+ */
+export function toCartCatalog(products: readonly Product[]): CartCatalog {
   return Object.fromEntries(
     products.map((p) => {
       const category = categoryOf(p);
@@ -112,14 +109,11 @@ export async function getCartCatalog(): Promise<CartCatalog> {
 
 export async function searchProducts(query: string) {
   "use cache";
-  cacheLife("hours");
-  cacheTag("catalog");
+  cached();
   const terms = normalizeText(query).split(" ").filter(Boolean);
   if (terms.length === 0) return [];
-  return products.filter((p) => {
-    const haystack = normalizeText(
-      [p.name, p.nameEn, p.brand, p.sku, categoryOf(p).name].join(" "),
-    );
+  return listProducts().filter((p) => {
+    const haystack = normalizeText([p.name, p.nameEn, p.brand, p.sku, categoryOf(p).name].join(" "));
     return terms.every((term) => haystack.includes(term));
   });
 }
@@ -133,9 +127,7 @@ export type ListingFilters = {
 /** Pure filter + sort for a category listing; out-of-stock items sink last. */
 export function applyListing(items: readonly Product[], filters: ListingFilters) {
   const filtered = items.filter(
-    (p) =>
-      (!filters.brand || p.brand === filters.brand) &&
-      (!filters.inStock || p.stock > 0),
+    (p) => (!filters.brand || p.brand === filters.brand) && (!filters.inStock || p.stock > 0),
   );
   const byStock = (a: Product, b: Product) => Number(b.stock > 0) - Number(a.stock > 0);
   const compare: Record<SortKey, (a: Product, b: Product) => number> = {

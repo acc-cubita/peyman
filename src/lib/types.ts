@@ -45,6 +45,8 @@ export type Product = {
   highlights: readonly string[];
   specs: readonly Spec[];
   featured?: boolean;
+  /** Hidden products stay in the database but not in the store. */
+  active: boolean;
   updatedAt: string;
 };
 

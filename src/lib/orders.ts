@@ -1,9 +1,10 @@
 import "server-only";
 import { randomInt, randomUUID } from "node:crypto";
 import { getDb, transaction } from "./db";
+import { decrementStock } from "./products";
 
 export type OrderStatus = "awaiting_payment" | "paid" | "failed";
-export type FailureReason = "cancelled" | "verify_failed" | "gateway_error";
+export type FailureReason = "cancelled" | "verify_failed" | "gateway_error" | "out_of_stock";
 
 export type Customer = {
   name: string;
@@ -158,11 +159,19 @@ export function attachAuthority(id: string, authority: string) {
     .run(authority, id);
 }
 
-/** Idempotent: a second callback for an already-paid order changes nothing. */
-export function markPaid(id: string, refId: string, cardPan: string | null) {
-  getDb()
-    .prepare("UPDATE orders SET status = 'paid', ref_id = ?, card_pan = ?, failure = NULL, paid_at = ? WHERE id = ? AND status <> 'paid'")
-    .run(refId, cardPan, new Date().toISOString(), id);
+/**
+ * Marks the order paid and takes its items out of stock, atomically.
+ * Idempotent: a second callback for an already-paid order changes nothing.
+ */
+export function completePayment(order: Order, refId: string, cardPan: string | null) {
+  const db = getDb();
+  return transaction(db, () => {
+    const { changes } = db
+      .prepare("UPDATE orders SET status = 'paid', ref_id = ?, card_pan = ?, failure = NULL, paid_at = ? WHERE id = ? AND status <> 'paid'")
+      .run(refId, cardPan, new Date().toISOString(), order.id);
+    if (changes > 0) decrementStock(order.items);
+    return changes > 0;
+  });
 }
 
 export function markFailed(id: string, reason: FailureReason) {

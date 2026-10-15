@@ -2,16 +2,18 @@
 
 import { redirect } from "next/navigation";
 import { provinces } from "@/data/provinces";
-import { getProducts } from "@/lib/catalog";
-import { faNumber, toLatinDigits } from "@/lib/format";
+import { faNumber, formatToman, toLatinDigits } from "@/lib/format";
 import { createOrder, type Customer, type OrderItem } from "@/lib/orders";
 import { startPayment } from "@/lib/payment";
 import { orderTotals } from "@/lib/pricing";
+import { listProducts } from "@/lib/products";
 
 export type CheckoutState = {
   message?: string;
   errors?: Partial<Record<keyof Customer, string>>;
   values?: Customer;
+  /** Set when prices moved since the page loaded; the form reloads its price list. */
+  pricesChanged?: boolean;
 };
 
 const MAX_LINES = 50;
@@ -65,8 +67,8 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
     return { values: customer, message: "سبد خرید شما خالی است یا قابل خواندن نیست." };
   }
 
-  // Prices and stock come from the catalog, never from the browser.
-  const catalog = new Map((await getProducts()).map((p) => [p.slug, p]));
+  // Prices and stock come straight from the database, never from the browser.
+  const catalog = new Map(listProducts().map((p) => [p.slug, p]));
   const items: OrderItem[] = [];
   const problems: string[] = [];
   for (const line of lines) {
@@ -84,6 +86,15 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
   }
 
   const totals = orderTotals(items.map((item) => ({ price: item.unitPrice, qty: item.qty })));
+  // Never charge an amount other than the one the customer was shown.
+  if (Number(field("expectedTotal")) !== totals.total) {
+    return {
+      values: customer,
+      pricesChanged: true,
+      message: `قیمت برخی کالاها تغییر کرده است. مبلغ جدید ${formatToman(totals.total)} است؛ برای پرداخت دوباره روی دکمه بزنید.`,
+    };
+  }
+
   const order = createOrder(customer, items, totals);
   const payUrl = await startPayment(order);
   redirect(payUrl ?? `/order/${order.id}`);

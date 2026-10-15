@@ -33,6 +33,8 @@ const failureText = {
   verify_failed:
     "پرداخت تأیید نشد. اگر مبلغی از حساب شما کسر شده باشد، طبق قوانین شاپرک حداکثر تا ۷۲ ساعت به حسابتان برمی‌گردد.",
   gateway_error: "اتصال به درگاه پرداخت برقرار نشد. چند لحظه بعد دوباره تلاش کنید.",
+  out_of_stock:
+    "موجودی یکی از کالاها هنگام پرداخت تمام شد، برای همین پرداخت تأیید نشد. اگر مبلغی از حساب شما کسر شده باشد، حداکثر تا ۷۲ ساعت به حسابتان برمی‌گردد.",
 } as const;
 
 async function OrderDetail({ params }: Pick<PageProps<"/order/[id]">, "params">) {
@@ -81,6 +83,8 @@ function StatusHeader({ order }: { order: Order }) {
   }
 
   const failed = order.status === "failed";
+  // Paying again cannot succeed while an item is sold out; send them back to the cart.
+  const canRetry = order.failure !== "out_of_stock";
   return (
     <header className="rounded-3xl bg-surface p-8 text-center ring-1 ring-line">
       {failed ? (
@@ -90,19 +94,26 @@ function StatusHeader({ order }: { order: Order }) {
       )}
       <h1 className="mt-4 font-display text-4xl text-board">{failed ? "پرداخت انجام نشد" : "در انتظار پرداخت"}</h1>
       <p className="mt-3 leading-8 text-muted">
-        {failed && order.failure ? failureText[order.failure] : "هنوز پرداختی برای این سفارش ثبت نشده است."} سفارش
-        شما با کد <span dir="ltr" className="font-mono text-ink">{order.code}</span> نگه داشته شده و می‌توانید
-        دوباره پرداخت کنید.
+        {failed && order.failure ? failureText[order.failure] : "هنوز پرداختی برای این سفارش ثبت نشده است."}
+        {canRetry && (
+          <>
+            {" "}
+            سفارش شما با کد <span dir="ltr" className="font-mono text-ink">{order.code}</span> نگه داشته شده و
+            می‌توانید دوباره پرداخت کنید.
+          </>
+        )}
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <form action={retryPayment.bind(null, order.id)}>
-          <button
-            type="submit"
-            className="rounded-full bg-board px-6 py-3 font-medium text-silk transition-colors hover:bg-board-deep"
-          >
-            پرداخت {formatToman(order.total)}
-          </button>
-        </form>
+        {canRetry && (
+          <form action={retryPayment.bind(null, order.id)}>
+            <button
+              type="submit"
+              className="rounded-full bg-board px-6 py-3 font-medium text-silk transition-colors hover:bg-board-deep"
+            >
+              پرداخت {formatToman(order.total)}
+            </button>
+          </form>
+        )}
         <Link href="/cart" className="rounded-full px-6 py-3 font-medium text-board ring-1 ring-line hover:ring-board/40">
           بازگشت به سبد خرید
         </Link>

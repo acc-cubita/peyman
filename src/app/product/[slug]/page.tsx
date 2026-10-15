@@ -19,7 +19,8 @@ type Props = PageProps<"/product/[slug]">;
 
 export async function generateStaticParams() {
   const products = await getProducts();
-  return products.map((product) => ({ slug: product.slug }));
+  // Cache Components needs at least one param; an empty store prerenders a 404.
+  return products.length > 0 ? products.map((product) => ({ slug: product.slug })) : [{ slug: "none" }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

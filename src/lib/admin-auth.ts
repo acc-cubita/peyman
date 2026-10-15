@@ -1,6 +1,8 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 /*
  * Single-password admin access. The session cookie is `<expiry>.<hmac>`,
@@ -36,10 +38,18 @@ export function newSession() {
 export async function isAdmin() {
   const token = (await cookies()).get(ADMIN_COOKIE)?.value;
   if (!token || !adminEnabled()) return false;
+  // The expiry check reads the clock, so it must run per request, never in a
+  // prerender or a cookie-aware prefetch.
+  await connection();
   const [rawExpiry, signature = ""] = token.split(".");
   const expires = Number(rawExpiry);
   if (!Number.isFinite(expires) || expires < Date.now()) return false;
   const expected = Buffer.from(sign(expires));
   const given = Buffer.from(signature);
   return expected.length === given.length && timingSafeEqual(expected, given);
+}
+
+/** Call at the top of every admin page and server action. */
+export async function requireAdmin() {
+  if (!(await isAdmin())) redirect("/admin/login");
 }

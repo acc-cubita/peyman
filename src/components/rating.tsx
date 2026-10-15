@@ -2,6 +2,7 @@ import { Star } from "lucide-react";
 import { faDecimal, faNumber } from "@/lib/format";
 
 export function Rating({ value, count }: { value: number; count: number }) {
+  if (count === 0) return null;
   return (
     <p className="flex items-center gap-1 text-xs text-muted">
       <Star aria-hidden className="size-3.5 fill-copper text-copper" />

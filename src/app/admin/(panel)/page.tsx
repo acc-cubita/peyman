@@ -1,49 +1,36 @@
-import { LogOut } from "lucide-react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { OrderStatusBadge } from "@/components/order-status-badge";
-import { isAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { faNumber, formatDateTime, formatToman } from "@/lib/format";
 import { listOrders, type Order } from "@/lib/orders";
-import { logout } from "./actions";
 
 export const metadata: Metadata = {
   title: "مدیریت سفارش‌ها",
   robots: { index: false, follow: false },
 };
 
-export default function AdminPage() {
+export default function AdminOrdersPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8">
-      <Suspense fallback={<div aria-hidden className="h-96 rounded-3xl bg-line/50" />}>
-        <Orders />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div aria-hidden className="h-96 rounded-3xl bg-line/50" />}>
+      <Orders />
+    </Suspense>
   );
 }
 
 async function Orders() {
-  if (!(await isAdmin())) redirect("/admin/login");
+  await requireAdmin();
   const orders = listOrders();
   const paid = orders.filter((order) => order.status === "paid");
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl text-board">سفارش‌ها</h1>
-          <p className="mt-1 text-sm text-muted">
-            {faNumber(paid.length)} سفارش پرداخت‌شده به ارزش {formatToman(paid.reduce((sum, o) => sum + o.total, 0))}
-            {orders.length > paid.length && ` · ${faNumber(orders.length - paid.length)} سفارش پرداخت‌نشده`}
-          </p>
-        </div>
-        <form action={logout}>
-          <button type="submit" className="flex items-center gap-2 rounded-full px-4 py-2 text-sm ring-1 ring-line hover:ring-board/40">
-            <LogOut aria-hidden className="size-4" />
-            خروج
-          </button>
-        </form>
+      <div className="mb-6">
+        <h1 className="font-display text-4xl text-board">سفارش‌ها</h1>
+        <p className="mt-1 text-sm text-muted">
+          {faNumber(paid.length)} سفارش پرداخت‌شده به ارزش {formatToman(paid.reduce((sum, o) => sum + o.total, 0))}
+          {orders.length > paid.length && ` · ${faNumber(orders.length - paid.length)} سفارش پرداخت‌نشده`}
+        </p>
       </div>
 
       {orders.length === 0 ? (

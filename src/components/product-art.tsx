@@ -1,4 +1,4 @@
-import { categoryOf } from "@/lib/catalog";
+import { categoryOf } from "@/lib/categories";
 import { cx } from "@/lib/cx";
 import type { Product } from "@/lib/types";
 import { CategoryIcon } from "./category-icon";

@@ -1,12 +1,15 @@
 import type { Product } from "@/lib/types";
 
+type SampleProduct = Omit<Product, "active">;
+
 /**
- * Sample catalog. Prices (Toman) and stock levels are placeholders until the
- * store connects a real inventory source.
+ * Sample catalog, copied into the database once when it is first created.
+ * After that, products are managed from /admin/products. Prices, stock and
+ * ratings here are placeholders.
  */
 const updatedAt = "2026-10-15";
 
-export const products: readonly Product[] = [
+export const sampleProducts: readonly SampleProduct[] = [
   // ── گوشی موبایل ─────────────────────────────────────────────
   {
     slug: "samsung-galaxy-a56-5g-256gb",

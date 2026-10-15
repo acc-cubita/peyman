@@ -1,6 +1,9 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { getBaseUrl } from "@/lib/base-url";
-import { getOrderByAuthority, markFailed, markPaid } from "@/lib/orders";
+import { CATALOG_TAG } from "@/lib/catalog";
+import { completePayment, getOrderByAuthority, markFailed } from "@/lib/orders";
+import { findShortages } from "@/lib/products";
 import { verifyPayment } from "@/lib/zarinpal";
 
 /**
@@ -18,10 +21,18 @@ export async function GET(request: NextRequest) {
   if (order.status !== "paid") {
     if (status !== "OK") {
       markFailed(order.id, "cancelled");
+    } else if (findShortages(order.items).length > 0) {
+      // Stock ran out while the customer was paying. Leaving the payment
+      // unverified makes ZarinPal return the money automatically.
+      markFailed(order.id, "out_of_stock");
     } else {
       const result = await verifyPayment({ amountRial: order.total * 10, authority });
-      if (result.ok) markPaid(order.id, result.refId, result.cardPan);
-      else markFailed(order.id, "verify_failed");
+      if (!result.ok) {
+        markFailed(order.id, "verify_failed");
+      } else if (completePayment(order, result.refId, result.cardPan)) {
+        // Stock changed: refresh product pages on their next request.
+        revalidateTag(CATALOG_TAG, { expire: 0 });
+      }
     }
   }
 
