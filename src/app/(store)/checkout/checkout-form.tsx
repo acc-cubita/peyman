@@ -9,12 +9,25 @@ import { useCartLines, useHydrated } from "@/lib/cart-store";
 import { cx } from "@/lib/cx";
 import { faNumber, formatToman } from "@/lib/format";
 import { orderTotals } from "@/lib/pricing";
+import type { Customer } from "@/lib/orders";
 import type { CartCatalog } from "@/lib/types";
 import { placeOrder, type CheckoutState } from "./actions";
 
 const initialState: CheckoutState = {};
 
-export function CheckoutForm({ catalog, provinces }: { catalog: CartCatalog; provinces: readonly string[] }) {
+export function CheckoutForm({
+  catalog,
+  provinces,
+  defaults,
+  account,
+}: {
+  catalog: CartCatalog;
+  provinces: readonly string[];
+  /** Prefill for a signed-in customer. */
+  defaults?: Customer;
+  /** Mobile of the signed-in account, if any. */
+  account: string | null;
+}) {
   const lines = useCartLines(catalog);
   const hydrated = useHydrated();
   const [state, formAction, pending] = useActionState(placeOrder, initialState);
@@ -40,7 +53,7 @@ export function CheckoutForm({ catalog, provinces }: { catalog: CartCatalog; pro
   }
 
   const { count, subtotal, shipping, total } = orderTotals(lines);
-  const values = state.values;
+  const values = state.values ?? defaults;
   const errors = state.errors ?? {};
 
   return (
@@ -51,6 +64,25 @@ export function CheckoutForm({ catalog, provinces }: { catalog: CartCatalog; pro
       <fieldset disabled={pending} className="min-w-0 space-y-6 rounded-2xl bg-surface p-5 ring-1 ring-line sm:p-7">
         <legend className="sr-only">مشخصات گیرنده</legend>
         <h2 className="text-lg font-semibold">مشخصات گیرنده</h2>
+        <p className="rounded-xl bg-silk px-4 py-3 text-sm leading-7 text-muted">
+          {account ? (
+            <>
+              با حساب <span dir="ltr" className="font-mono text-ink">{account}</span> وارد شده‌اید؛ این سفارش در{" "}
+              <Link href="/account" className="text-copper-deep underline-offset-4 hover:underline">
+                سفارش‌های من
+              </Link>{" "}
+              ثبت می‌شود.
+            </>
+          ) : (
+            <>
+              قبلاً خرید کرده‌اید؟{" "}
+              <Link href="/account/login?next=/checkout" className="font-medium text-copper-deep underline-offset-4 hover:underline">
+                وارد حساب کاربری شوید
+              </Link>{" "}
+              تا نشانی خودکار پر شود و سفارش‌ها را بعداً پیگیری کنید.
+            </>
+          )}
+        </p>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field name="name" label="نام و نام خانوادگی" error={errors.name}>

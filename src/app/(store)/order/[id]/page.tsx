@@ -50,8 +50,12 @@ async function OrderDetail({ params }: Pick<PageProps<"/order/[id]">, "params">)
     <article className="space-y-6">
       <StatusHeader order={order} />
       <OrderSummary order={order} />
-      <p className="text-center text-sm text-muted">
-        سؤالی دارید؟ با کد سفارش با ما تماس بگیرید:{" "}
+      <p className="text-center text-sm leading-7 text-muted">
+        همه سفارش‌هایتان را در{" "}
+        <Link href="/account" className="text-copper-deep underline-offset-4 hover:underline">
+          حساب کاربری
+        </Link>{" "}
+        ببینید. سؤالی دارید؟ با کد سفارش با ما تماس بگیرید:{" "}
         <a href={`tel:${site.phone}`} dir="ltr" className="font-mono text-ink hover:text-board">
           {site.phone}
         </a>

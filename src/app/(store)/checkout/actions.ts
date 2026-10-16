@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { provinces } from "@/data/provinces";
+import { getCustomer } from "@/lib/customer-auth";
 import { faNumber, formatToman, toLatinDigits } from "@/lib/format";
 import { createOrder, type Customer, type OrderItem } from "@/lib/orders";
 import { startPayment } from "@/lib/payment";
@@ -95,7 +96,8 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
     };
   }
 
-  const order = createOrder(customer, items, totals);
+  const account = await getCustomer();
+  const order = createOrder(customer, items, totals, account?.mobile ?? null);
   const payUrl = await startPayment(order);
   redirect(payUrl ?? `/order/${order.id}`);
 }

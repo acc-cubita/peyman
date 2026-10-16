@@ -1,3 +1,4 @@
+import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { getCategories } from "@/lib/catalog";
 import { faNumber } from "@/lib/format";
@@ -38,7 +39,16 @@ export async function SiteHeader() {
           </span>
         </Link>
         <SearchBox id="header-search" className="order-last w-full md:order-none md:mx-auto md:max-w-xl md:flex-1" />
-        <div className="ms-auto md:ms-0">
+        <div className="ms-auto flex items-center gap-2 md:ms-0">
+          {/* Static on purpose: /account sends visitors who are not signed in to the login page. */}
+          <Link
+            href="/account"
+            className="flex h-11 shrink-0 items-center gap-2 rounded-full px-3 text-sm font-medium text-ink ring-1 ring-line transition-colors hover:bg-surface hover:ring-board/40"
+          >
+            <UserRound aria-hidden className="size-5" />
+            <span className="hidden sm:inline">حساب کاربری</span>
+            <span className="sr-only sm:hidden">حساب کاربری</span>
+          </Link>
           <CartLink />
         </div>
       </div>

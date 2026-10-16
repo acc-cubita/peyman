@@ -129,6 +129,29 @@ const migrations: Migration[] = [
         value TEXT NOT NULL
       );
     `),
+
+  // 5 — customer accounts: mobile number plus a one-time SMS code
+  (db) =>
+    db.exec(`
+      CREATE TABLE customers (
+        mobile        TEXT PRIMARY KEY,
+        name          TEXT,
+        created_at    TEXT NOT NULL,
+        last_login_at TEXT
+      );
+      CREATE TABLE login_codes (
+        mobile       TEXT PRIMARY KEY,
+        code_hash    TEXT NOT NULL,
+        expires_at   INTEGER NOT NULL,
+        attempts     INTEGER NOT NULL DEFAULT 0,
+        sent_at      INTEGER NOT NULL,
+        window_start INTEGER NOT NULL,
+        sends        INTEGER NOT NULL
+      );
+      -- The account that placed the order, when the recipient's mobile differs.
+      ALTER TABLE orders ADD COLUMN account_mobile TEXT;
+      CREATE INDEX orders_account_mobile ON orders(account_mobile);
+    `),
 ];
 
 /** Adds the sample products of every category that has no products yet. */

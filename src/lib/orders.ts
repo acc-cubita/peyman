@@ -133,6 +133,8 @@ export function createOrder(
   customer: Customer,
   items: OrderItem[],
   totals: { subtotal: number; shipping: number; total: number },
+  /** The signed-in account placing the order, if any. */
+  accountMobile: string | null = null,
 ): Order {
   const db = getDb();
   const id = randomUUID();
@@ -144,8 +146,8 @@ export function createOrder(
 
     db.prepare(
       `INSERT INTO orders (id, code, status, customer_name, mobile, province, city, address, postal_code, note,
-                           subtotal, shipping, total, created_at)
-       VALUES (?, ?, 'awaiting_payment', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                           subtotal, shipping, total, created_at, account_mobile)
+       VALUES (?, ?, 'awaiting_payment', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       id,
       code,
@@ -160,6 +162,7 @@ export function createOrder(
       totals.shipping,
       totals.total,
       new Date().toISOString(),
+      accountMobile,
     );
     const insertItem = db.prepare(
       "INSERT INTO order_items (order_id, slug, name, sku, unit_price, qty) VALUES (?, ?, ?, ?, ?, ?)",
@@ -291,6 +294,15 @@ export function updateFulfillment(
 export function paidOrdersSince(iso: string): Order[] {
   return withItems(
     getDb().prepare("SELECT * FROM orders WHERE status = 'paid' AND paid_at >= ? ORDER BY paid_at").all(iso) as OrderRow[],
+  );
+}
+
+/** Orders a signed-in customer may see: sent to their number, or placed from their account. */
+export function listOrdersForAccount(mobile: string, limit = 100): Order[] {
+  return withItems(
+    getDb()
+      .prepare("SELECT * FROM orders WHERE mobile = ? OR account_mobile = ? ORDER BY created_at DESC LIMIT ?")
+      .all(mobile, mobile, limit) as OrderRow[],
   );
 }
 
