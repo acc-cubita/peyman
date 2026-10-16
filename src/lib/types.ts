@@ -15,6 +15,8 @@ export type IconKey =
 export type Category = {
   slug: string;
   name: string;
+  /** Label for the header menu, short enough for every category to fit on one line. */
+  shortName: string;
   group: CategoryGroup;
   icon: IconKey;
   /** One line shown on category tiles. */

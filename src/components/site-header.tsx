@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { getCategories } from "@/lib/catalog";
 import { faNumber } from "@/lib/format";
-import { site } from "@/lib/site";
+import { groups, site } from "@/lib/site";
 import { CartLink } from "./cart-link";
+import { CategoryMenu } from "./category-menu";
 import { LogoMark } from "./logo-mark";
 import { SearchBox } from "./search-box";
 
@@ -43,30 +44,39 @@ export async function SiteHeader() {
       </div>
 
       <nav aria-label="دسته‌بندی محصولات" className="border-t border-line">
-        <ul className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-1.5 text-sm whitespace-nowrap">
+        {/* Desktop: every category on one line, no scrolling. */}
+        <ul className="mx-auto hidden max-w-7xl items-center gap-0.5 px-4 py-1.5 text-[13px] whitespace-nowrap lg:flex xl:gap-1 xl:text-sm">
           {manufactured.map((category) => (
             <li key={category.slug}>
               <Link
                 href={`/category/${category.slug}`}
-                className="block rounded-full px-3 py-1.5 text-ink/85 hover:bg-surface hover:text-board"
+                title={category.name}
+                className="block rounded-full px-2.5 py-1.5 text-ink/85 hover:bg-surface hover:text-board xl:px-3"
               >
-                {category.name}
+                {category.shortName}
               </Link>
             </li>
           ))}
-          <li aria-hidden className="mx-2 h-4 w-px shrink-0 bg-line" />
+          <li aria-hidden className="mx-1.5 h-4 w-px shrink-0 bg-line xl:mx-2" />
           {components.map((category) => (
             <li key={category.slug}>
               <Link
                 href={`/category/${category.slug}`}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-ink/85 hover:bg-surface hover:text-board"
+                title={category.name}
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-ink/85 hover:bg-surface hover:text-board xl:px-3"
               >
                 <span aria-hidden className="size-1.5 rounded-full bg-copper" />
-                {category.name}
+                {category.shortName}
               </Link>
             </li>
           ))}
         </ul>
+        <CategoryMenu
+          sections={[
+            { title: groups.manufactured.name, items: manufactured.map(({ slug, shortName }) => ({ slug, shortName })) },
+            { title: groups.components.name, items: components.map(({ slug, shortName }) => ({ slug, shortName })) },
+          ]}
+        />
       </nav>
     </header>
   );

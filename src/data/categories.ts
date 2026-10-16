@@ -4,6 +4,7 @@ export const categories: readonly Category[] = [
   {
     slug: "appliance-protectors",
     name: "محافظ لوازم خانگی",
+    shortName: "محافظ لوازم خانگی",
     group: "manufactured",
     icon: "fridge",
     related: ["power-strips", "building-protectors"],
@@ -14,6 +15,7 @@ export const categories: readonly Category[] = [
   {
     slug: "power-strips",
     name: "چندراهی و محافظ صوتی‌تصویری",
+    shortName: "چندراهی محافظ‌دار",
     group: "manufactured",
     icon: "strip",
     related: ["appliance-protectors"],
@@ -24,6 +26,7 @@ export const categories: readonly Category[] = [
   {
     slug: "building-protectors",
     name: "محافظ ساختمان و سه‌فاز",
+    shortName: "محافظ ساختمان",
     group: "manufactured",
     icon: "house",
     related: ["appliance-protectors"],
@@ -34,6 +37,7 @@ export const categories: readonly Category[] = [
   {
     slug: "fire-alarm-panels",
     name: "کنترل پنل اعلام حریق",
+    shortName: "پنل اعلام حریق",
     group: "manufactured",
     icon: "panel",
     related: ["fire-detectors"],
@@ -44,6 +48,7 @@ export const categories: readonly Category[] = [
   {
     slug: "fire-detectors",
     name: "دتکتور و تجهیزات اعلام حریق",
+    shortName: "دتکتور و تجهیزات",
     group: "manufactured",
     icon: "smoke",
     related: ["fire-alarm-panels"],
@@ -54,6 +59,7 @@ export const categories: readonly Category[] = [
   {
     slug: "dev-boards",
     name: "برد توسعه و میکروکنترلر",
+    shortName: "برد توسعه",
     group: "components",
     icon: "board",
     tagline: "آردوینو، ESP32، رزبری پای",
@@ -63,6 +69,7 @@ export const categories: readonly Category[] = [
   {
     slug: "sensors",
     name: "سنسور و ماژول",
+    shortName: "سنسور و ماژول",
     group: "components",
     icon: "sensor",
     tagline: "دما، فاصله، حرکت و ارتباط",
@@ -72,6 +79,7 @@ export const categories: readonly Category[] = [
   {
     slug: "passives",
     name: "قطعات پسیو و بردبورد",
+    shortName: "قطعات پسیو",
     group: "components",
     icon: "component",
     tagline: "مقاومت، خازن، LED و بردبورد",
@@ -81,6 +89,7 @@ export const categories: readonly Category[] = [
   {
     slug: "tools",
     name: "ابزار و تجهیزات",
+    shortName: "ابزار",
     group: "components",
     icon: "tool",
     tagline: "هویه، مولتی‌متر، منبع تغذیه",
