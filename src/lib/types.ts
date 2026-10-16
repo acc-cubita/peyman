@@ -71,3 +71,15 @@ export type CartCatalogItem = {
 };
 
 export type CartCatalog = Record<string, CartCatalogItem>;
+
+/** One row of the live search dropdown. */
+export type SearchSuggestion = {
+  slug: string;
+  name: string;
+  sku: string;
+  category: string;
+  price: number;
+  stock: number;
+  icon: IconKey;
+  onBoard: boolean;
+};
