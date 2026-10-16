@@ -88,6 +88,47 @@ const migrations: Migration[] = [
     `);
     seedEmptyCategories(db);
   },
+
+  // 4 — shipping status for paid orders, and the online support chat
+  (db) =>
+    db.exec(`
+      ALTER TABLE orders ADD COLUMN fulfillment TEXT;
+      ALTER TABLE orders ADD COLUMN tracking_code TEXT;
+      ALTER TABLE orders ADD COLUMN shipped_at TEXT;
+      ALTER TABLE orders ADD COLUMN delivered_at TEXT;
+      ALTER TABLE orders ADD COLUMN admin_note TEXT;
+      UPDATE orders SET fulfillment = 'processing' WHERE status = 'paid';
+      CREATE INDEX orders_mobile ON orders(mobile);
+      CREATE INDEX orders_paid_at ON orders(paid_at);
+
+      CREATE TABLE support_conversations (
+        id               TEXT PRIMARY KEY,
+        token_hash       TEXT NOT NULL UNIQUE,
+        name             TEXT NOT NULL,
+        mobile           TEXT,
+        page             TEXT,
+        status           TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+        admin_read_id    INTEGER NOT NULL DEFAULT 0,
+        customer_read_id INTEGER NOT NULL DEFAULT 0,
+        created_at       TEXT NOT NULL,
+        last_message_at  TEXT NOT NULL
+      );
+      CREATE INDEX support_conversations_recent ON support_conversations(status, last_message_at);
+      CREATE INDEX support_conversations_mobile ON support_conversations(mobile);
+      CREATE TABLE support_messages (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        conversation_id TEXT NOT NULL REFERENCES support_conversations(id) ON DELETE CASCADE,
+        sender          TEXT NOT NULL CHECK (sender IN ('customer', 'admin')),
+        body            TEXT NOT NULL,
+        created_at      TEXT NOT NULL
+      );
+      CREATE INDEX support_messages_conversation ON support_messages(conversation_id, id);
+
+      CREATE TABLE settings (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `),
 ];
 
 /** Adds the sample products of every category that has no products yet. */

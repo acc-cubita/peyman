@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -22,8 +23,9 @@ async function NewProduct() {
   await requireAdmin();
   return (
     <>
-      <Link href="/admin/products" className="text-sm text-muted hover:text-board">
-        ← محصولات
+      <Link href="/admin/products" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+        <ArrowRight aria-hidden className="size-4" />
+        محصولات
       </Link>
       <h1 className="mt-2 mb-6 font-display text-4xl text-board">افزودن محصول</h1>
       <ProductForm categories={categories} />

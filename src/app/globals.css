@@ -19,6 +19,9 @@
   --color-muted: #56655e;
   --color-line: #dde3dc;
   --color-signal: #c62f27;
+  /* single-series chart marks: board hue, lightened to read as color (validated, 4.6:1 on white) */
+  --color-chart: #23855f;
+  --color-chart-hover: #2f9068;
 }
 
 @theme inline {

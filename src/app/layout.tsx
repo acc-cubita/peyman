@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Lalezar } from "next/font/google";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -53,11 +51,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       dir="rtl"
       className={`${lalezar.variable} ${plexArabic.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-      </body>
+      {/* The store and the admin panel each bring their own chrome. */}
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

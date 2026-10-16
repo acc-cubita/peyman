@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,8 +31,9 @@ async function EditProduct({ params }: Pick<PageProps<"/admin/products/[slug]">,
 
   return (
     <>
-      <Link href="/admin/products" className="text-sm text-muted hover:text-board">
-        ← محصولات
+      <Link href="/admin/products" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+        <ArrowRight aria-hidden className="size-4" />
+        محصولات
       </Link>
       <div className="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-4xl text-board">ویرایش محصول</h1>

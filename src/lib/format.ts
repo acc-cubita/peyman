@@ -36,6 +36,23 @@ const dateTime = new Intl.DateTimeFormat("fa-IR", {
 /** Solar Hijri date and Tehran time, e.g. «۲۳ مهر ۱۴۰۵، ۱۴:۰۵». */
 export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
 
+const time = new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tehran" });
+const dayMonth = new Intl.DateTimeFormat("fa-IR", { day: "numeric", month: "long", timeZone: "Asia/Tehran" });
+const dayKey = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Asia/Tehran" });
+
+/** Tehran clock time, e.g. «۱۴:۰۵». */
+export const formatTime = (iso: string) => time.format(new Date(iso));
+
+/** Solar Hijri day and month, e.g. «۲۴ مهر». */
+export const formatDayMonth = (date: string | Date) => dayMonth.format(new Date(date));
+
+/** The Tehran calendar day of a moment, as "2026-10-15", for grouping by day. */
+export const tehranDay = (date: string | Date) => dayKey.format(new Date(date));
+
+/** Time for today's messages, day and month for older ones. */
+export const formatWhen = (iso: string, now = new Date()) =>
+  tehranDay(iso) === tehranDay(now) ? formatTime(iso) : formatDayMonth(iso);
+
 /** Folds Arabic letter variants and Eastern digits so searches match. */
 export function normalizeText(value: string) {
   return toLatinDigits(value)

@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, Clock } from "lucide-react";
+import { Check, CircleAlert, CircleCheck, Clock } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,8 +6,9 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { ProductName } from "@/components/product-name";
+import { cx } from "@/lib/cx";
 import { faNumber, formatDateTime, formatToman } from "@/lib/format";
-import { getOrder, type Order } from "@/lib/orders";
+import { fulfillments, getOrder, type Order } from "@/lib/orders";
 import { site } from "@/lib/site";
 import { retryPayment } from "../actions";
 import { ClearCart } from "./clear-cart";
@@ -65,10 +66,17 @@ function StatusHeader({ order }: { order: Order }) {
       <header className="perfboard rounded-3xl bg-board-deep p-8 text-center text-silk">
         <ClearCart orderId={order.id} />
         <CircleCheck aria-hidden className="mx-auto size-12 text-copper-bright" strokeWidth={1.5} />
-        <h1 className="mt-4 font-display text-4xl">سفارش شما ثبت شد</h1>
+        <h1 className="mt-4 font-display text-4xl">
+          {order.fulfillment === "delivered" ? "سفارش تحویل داده شد" : order.fulfillment === "shipped" ? "سفارش ارسال شد" : "سفارش شما ثبت شد"}
+        </h1>
         <p className="mt-3 leading-8 text-board-ink">
-          پرداخت با موفقیت انجام شد و سفارش برای آماده‌سازی و ارسال در صف قرار گرفت.
+          {order.fulfillment === "shipped"
+            ? "سفارش از انبار ارسال شده و در راه است."
+            : order.fulfillment === "delivered"
+              ? "امیدواریم از خریدتان راضی باشید."
+              : "پرداخت با موفقیت انجام شد و سفارش برای آماده‌سازی و ارسال در صف قرار گرفت."}
         </p>
+        <DeliverySteps order={order} />
         <dl className="mx-auto mt-6 grid max-w-md grid-cols-2 gap-3 text-sm">
           <div className="rounded-2xl bg-board/70 p-3">
             <dt className="text-board-ink/80">کد سفارش</dt>
@@ -78,6 +86,12 @@ function StatusHeader({ order }: { order: Order }) {
             <dt className="text-board-ink/80">کد پیگیری پرداخت</dt>
             <dd dir="ltr" className="mt-1 font-mono text-lg text-copper-bright">{order.refId}</dd>
           </div>
+          {order.trackingCode && order.fulfillment !== "processing" && (
+            <div className="col-span-2 rounded-2xl bg-board/70 p-3">
+              <dt className="text-board-ink/80">کد رهگیری مرسوله</dt>
+              <dd dir="ltr" className="mt-1 font-mono text-lg text-copper-bright">{order.trackingCode}</dd>
+            </div>
+          )}
         </dl>
       </header>
     );
@@ -123,6 +137,34 @@ function StatusHeader({ order }: { order: Order }) {
   );
 }
 
+const stepLabels = ["پرداخت", "آماده‌سازی", "ارسال", "تحویل"];
+
+function DeliverySteps({ order }: { order: Order }) {
+  // Step 0 (payment) is done; the fulfillment index says how far delivery has come.
+  const reached = 1 + fulfillments.indexOf(order.fulfillment ?? "processing");
+  return (
+    <ol aria-label="مراحل سفارش" className="mx-auto mt-6 flex max-w-md items-start justify-between gap-2 text-xs">
+      {stepLabels.map((label, index) => {
+        const done = index < reached || (index === reached && order.fulfillment === "delivered");
+        const current = index === reached && order.fulfillment !== "delivered";
+        return (
+          <li key={label} aria-current={current ? "step" : undefined} className="flex flex-1 flex-col items-center gap-2">
+            <span
+              className={cx(
+                "grid size-8 place-items-center rounded-full ring-1",
+                done ? "bg-copper-bright text-board-deep ring-copper-bright" : current ? "ring-copper-bright text-copper-bright" : "ring-white/20 text-board-ink/50",
+              )}
+            >
+              {done ? <Check aria-hidden className="size-4" /> : faNumber(index + 1)}
+            </span>
+            <span className={done || current ? "text-silk" : "text-board-ink/60"}>{label}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function OrderSummary({ order }: { order: Order }) {
   return (
     <section aria-label="جزئیات سفارش" className="rounded-3xl bg-surface p-6 ring-1 ring-line sm:p-8">
@@ -132,7 +174,7 @@ function OrderSummary({ order }: { order: Order }) {
         </h2>
         <div className="flex items-center gap-3 text-xs text-muted">
           <time dateTime={order.createdAt}>{formatDateTime(order.createdAt)}</time>
-          <OrderStatusBadge status={order.status} />
+          <OrderStatusBadge order={order} />
         </div>
       </div>
 

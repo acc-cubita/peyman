@@ -1,10 +1,14 @@
 import "server-only";
 import { randomInt, randomUUID } from "node:crypto";
 import { getDb, transaction } from "./db";
+import { toLatinDigits } from "./format";
 import { decrementStock } from "./products";
 
 export type OrderStatus = "awaiting_payment" | "paid" | "failed";
 export type FailureReason = "cancelled" | "verify_failed" | "gateway_error" | "out_of_stock";
+/** Where a paid order is on its way to the customer. */
+export type Fulfillment = "processing" | "shipped" | "delivered";
+export const fulfillments: readonly Fulfillment[] = ["processing", "shipped", "delivered"];
 
 export type Customer = {
   name: string;
@@ -34,6 +38,13 @@ export type Order = {
   failure: FailureReason | null;
   createdAt: string;
   paidAt: string | null;
+  /** Null until the order is paid. */
+  fulfillment: Fulfillment | null;
+  trackingCode: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  /** Internal note, never shown to the customer. */
+  adminNote: string | null;
 };
 
 type OrderRow = {
@@ -56,6 +67,11 @@ type OrderRow = {
   failure: FailureReason | null;
   created_at: string;
   paid_at: string | null;
+  fulfillment: Fulfillment | null;
+  tracking_code: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  admin_note: string | null;
 };
 
 type ItemRow = { order_id: string; slug: string; name: string; sku: string; unit_price: number; qty: number };
@@ -90,6 +106,11 @@ function toOrder(row: OrderRow, items: ItemRow[]): Order {
     failure: row.failure,
     createdAt: row.created_at,
     paidAt: row.paid_at,
+    fulfillment: row.fulfillment,
+    trackingCode: row.tracking_code,
+    shippedAt: row.shipped_at,
+    deliveredAt: row.delivered_at,
+    adminNote: row.admin_note,
   };
 }
 
@@ -167,7 +188,10 @@ export function completePayment(order: Order, refId: string, cardPan: string | n
   const db = getDb();
   return transaction(db, () => {
     const { changes } = db
-      .prepare("UPDATE orders SET status = 'paid', ref_id = ?, card_pan = ?, failure = NULL, paid_at = ? WHERE id = ? AND status <> 'paid'")
+      .prepare(
+        `UPDATE orders SET status = 'paid', fulfillment = 'processing', ref_id = ?, card_pan = ?, failure = NULL, paid_at = ?
+         WHERE id = ? AND status <> 'paid'`,
+      )
       .run(refId, cardPan, new Date().toISOString(), order.id);
     if (changes > 0) decrementStock(order.items);
     return changes > 0;
@@ -178,8 +202,98 @@ export function markFailed(id: string, reason: FailureReason) {
   getDb().prepare("UPDATE orders SET status = 'failed', failure = ? WHERE id = ? AND status <> 'paid'").run(reason, id);
 }
 
-export function listOrders(limit = 200): Order[] {
-  const rows = getDb().prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT ?").all(limit) as OrderRow[];
+function withItems(rows: OrderRow[]) {
   const items = itemsFor(rows.map((row) => row.id));
   return rows.map((row) => toOrder(row, items.get(row.id) ?? []));
+}
+
+export function listOrders(limit = 200): Order[] {
+  return withItems(getDb().prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT ?").all(limit) as OrderRow[]);
+}
+
+/** Admin order list tabs. */
+export type OrderFilter = "all" | Fulfillment | "awaiting_payment" | "failed";
+
+const filterSql: Record<OrderFilter, string> = {
+  all: "1 = 1",
+  processing: "status = 'paid' AND fulfillment = 'processing'",
+  shipped: "status = 'paid' AND fulfillment = 'shipped'",
+  delivered: "status = 'paid' AND fulfillment = 'delivered'",
+  awaiting_payment: "status = 'awaiting_payment'",
+  failed: "status = 'failed'",
+};
+
+export const isOrderFilter = (value: unknown): value is OrderFilter =>
+  typeof value === "string" && Object.hasOwn(filterSql, value);
+
+export function countOrders(): Record<OrderFilter, number> {
+  const db = getDb();
+  return Object.fromEntries(
+    Object.entries(filterSql).map(([key, where]) => [
+      key,
+      (db.prepare(`SELECT COUNT(*) AS n FROM orders WHERE ${where}`).get() as { n: number }).n,
+    ]),
+  ) as Record<OrderFilter, number>;
+}
+
+/** Filtered, searched and paged list; `query` matches the order code, customer name or mobile. */
+export function searchOrders({
+  filter = "all",
+  query = "",
+  page = 1,
+  pageSize = 30,
+}: {
+  filter?: OrderFilter;
+  query?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const db = getDb();
+  const term = toLatinDigits(query).trim();
+  const where = [filterSql[filter]];
+  const args: string[] = [];
+  if (term) {
+    where.push("(code LIKE ? OR customer_name LIKE ? OR mobile LIKE ?)");
+    // SQLite's LIKE ignores ASCII case, so "pe-12" finds "PE-123456".
+    const like = `%${term.replace(/[%_]/g, "")}%`;
+    args.push(like, like, like);
+  }
+  const clause = where.join(" AND ");
+  const { n: total } = db.prepare(`SELECT COUNT(*) AS n FROM orders WHERE ${clause}`).get(...args) as { n: number };
+  const rows = db
+    .prepare(`SELECT * FROM orders WHERE ${clause} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+    .all(...args, pageSize, (page - 1) * pageSize) as OrderRow[];
+  return { orders: withItems(rows), total, pages: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+/** Moves a paid order along its delivery steps; moving back clears the later timestamps. */
+export function updateFulfillment(
+  id: string,
+  { fulfillment, trackingCode, adminNote }: { fulfillment: Fulfillment; trackingCode: string; adminNote: string },
+) {
+  const now = new Date().toISOString();
+  const shipped = fulfillment !== "processing";
+  const delivered = fulfillment === "delivered";
+  return (
+    getDb()
+      .prepare(
+        `UPDATE orders SET fulfillment = ?, tracking_code = ?, admin_note = ?,
+                           shipped_at = CASE WHEN ? THEN COALESCE(shipped_at, ?) END,
+                           delivered_at = CASE WHEN ? THEN COALESCE(delivered_at, ?) END
+         WHERE id = ? AND status = 'paid'`,
+      )
+      .run(fulfillment, trackingCode || null, adminNote || null, shipped ? 1 : 0, now, delivered ? 1 : 0, now, id)
+      .changes > 0
+  );
+}
+
+/** Paid orders since a moment, for sales reports. */
+export function paidOrdersSince(iso: string): Order[] {
+  return withItems(
+    getDb().prepare("SELECT * FROM orders WHERE status = 'paid' AND paid_at >= ? ORDER BY paid_at").all(iso) as OrderRow[],
+  );
+}
+
+export function countOrdersByMobile(mobile: string) {
+  return (getDb().prepare("SELECT COUNT(*) AS n FROM orders WHERE mobile = ?").get(mobile) as { n: number }).n;
 }
