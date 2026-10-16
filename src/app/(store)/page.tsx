@@ -54,7 +54,11 @@ export default async function HomePage() {
         <div className="perfboard relative grid overflow-hidden rounded-3xl bg-board-deep lg:grid-cols-[1.05fr_1fr]">
           <div className="relative z-10 flex flex-col gap-6 p-7 sm:p-10 lg:py-14">
             <p className="text-sm text-copper-bright">تولیدکننده محافظ برق و تجهیزات اعلام حریق</p>
-            <h1 className="font-display text-[2.6rem] leading-[1.3] text-silk sm:text-6xl sm:leading-[1.25]">
+            {/*
+              The first line must stay on one line: in Lalezar it is ~8.4× the font size wide,
+              and phones have 100vw minus 88px (page gutters + card padding) for it.
+            */}
+            <h1 className="font-display text-[length:min(2.6rem,calc((100vw_-_88px)/8.7))] leading-[1.3] text-silk sm:text-6xl sm:leading-[1.25] lg:text-5xl xl:text-6xl">
               محافظ برق و اعلام&nbsp;حریق،
               <br />
               <span className="text-copper-bright">با {faNumber(site.warrantyYears)} سال گارانتی.</span>
