@@ -54,8 +54,8 @@ export async function SiteHeader() {
       </div>
 
       <nav aria-label="دسته‌بندی محصولات" className="border-t border-line">
-        {/* Desktop: every category on one line, no scrolling. */}
-        <ul className="mx-auto hidden max-w-7xl items-center gap-0.5 px-4 py-1.5 text-[13px] whitespace-nowrap lg:flex xl:gap-1 xl:text-sm">
+        {/* Desktop: every category on one line, spread across the page width, no scrolling. */}
+        <ul className="mx-auto hidden max-w-7xl items-center justify-between gap-0.5 px-4 py-1.5 text-[13px] whitespace-nowrap lg:flex xl:text-sm">
           {manufactured.map((category) => (
             <li key={category.slug}>
               <Link
@@ -67,7 +67,7 @@ export async function SiteHeader() {
               </Link>
             </li>
           ))}
-          <li aria-hidden className="mx-1.5 h-4 w-px shrink-0 bg-line xl:mx-2" />
+          <li aria-hidden className="h-4 w-px shrink-0 bg-line" />
           {components.map((category) => (
             <li key={category.slug}>
               <Link
