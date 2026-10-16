@@ -7,6 +7,11 @@ export const faDecimal = (value: number) => decimal.format(value);
 
 export const formatToman = (value: number) => `${integer.format(value)} تومان`;
 
+/** 60 → «۵ سال گارانتی», 18 → «۱۸ ماه گارانتی». */
+export function warrantyLabel(months: number) {
+  return months % 12 === 0 ? `${integer.format(months / 12)} سال گارانتی` : `${integer.format(months)} ماه گارانتی`;
+}
+
 export function discountPercent(price: number, compareAtPrice?: number) {
   if (!compareAtPrice || compareAtPrice <= price) return 0;
   return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);

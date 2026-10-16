@@ -9,8 +9,10 @@ export const site = {
   nameEn: "Peyman Elec",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://peyman-elec.ir",
   description:
-    "فروشگاه آنلاین پیمان الکترونیک؛ گوشی، لپ‌تاپ و لوازم جانبی در کنار برد آردوینو، سنسور، قطعات و ابزار الکترونیک با ضمانت اصالت کالا.",
+    "پیمان الکترونیک، تولیدکننده محافظ برق و تجهیزات اعلام حریق با پنج سال گارانتی؛ همراه با برد آردوینو، سنسور، قطعات و ابزار الکترونیک.",
   phone: "021-00000000",
+  /** Warranty advertised for the store's own products. Each product's actual warranty is set in admin. */
+  warrantyYears: 5,
   city: "تهران",
   /** Orders at or above this amount (Toman) ship free. */
   freeShippingFrom: 5_000_000,
@@ -19,9 +21,9 @@ export const site = {
 } as const;
 
 export const groups: Record<CategoryGroup, { name: string; blurb: string }> = {
-  digital: {
-    name: "کالای دیجیتال",
-    blurb: "موبایل، لپ‌تاپ، صوتی و پوشیدنی",
+  manufactured: {
+    name: "محصولات پیمان",
+    blurb: "محافظ برق و اعلام حریق با ۵ سال گارانتی",
   },
   components: {
     name: "قطعات و ابزار",

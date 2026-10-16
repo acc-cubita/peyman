@@ -37,7 +37,7 @@
   background-size: 14px 14px;
 }
 
-/* Graph paper for digital product tiles. */
+/* Graph paper for the store's own products. */
 @utility gridpaper {
   background-image:
     linear-gradient(to right, rgb(21 33 28 / 0.05) 1px, transparent 1px),

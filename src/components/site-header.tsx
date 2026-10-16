@@ -7,8 +7,8 @@ import { LogoMark } from "./logo-mark";
 import { SearchBox } from "./search-box";
 
 export async function SiteHeader() {
-  const [digital, components] = await Promise.all([
-    getCategories("digital"),
+  const [manufactured, components] = await Promise.all([
+    getCategories("manufactured"),
     getCategories("components"),
   ]);
 
@@ -16,7 +16,7 @@ export async function SiteHeader() {
     <header className="border-b border-line bg-silk">
       <div className="bg-board-deep text-xs text-board-ink">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2">
-          <p>ارسال رایگان برای سفارش‌های بالای {faNumber(site.freeShippingFrom / 1_000_000)} میلیون تومان</p>
+          <p>{faNumber(site.warrantyYears)} سال گارانتی برای همه محصولات تولیدی پیمان</p>
           <p className="hidden sm:block">
             مشاوره فنی پیش از خرید:{" "}
             <a href={`tel:${site.phone}`} dir="ltr" className="font-mono text-silk hover:text-copper-bright">
@@ -44,7 +44,7 @@ export async function SiteHeader() {
 
       <nav aria-label="دسته‌بندی محصولات" className="border-t border-line">
         <ul className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-1.5 text-sm whitespace-nowrap">
-          {digital.map((category) => (
+          {manufactured.map((category) => (
             <li key={category.slug}>
               <Link
                 href={`/category/${category.slug}`}

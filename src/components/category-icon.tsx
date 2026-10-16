@@ -1,23 +1,23 @@
 import {
-  BatteryCharging,
+  AlarmSmoke,
+  BellRing,
   CircuitBoard,
   Component,
-  Headphones,
-  Laptop,
+  HousePlug,
+  PlugZap,
   Radar,
-  Smartphone,
-  Watch,
+  Refrigerator,
   Wrench,
   type LucideProps,
 } from "lucide-react";
 import type { IconKey } from "@/lib/types";
 
 const icons = {
-  smartphone: Smartphone,
-  laptop: Laptop,
-  headphones: Headphones,
-  watch: Watch,
-  battery: BatteryCharging,
+  fridge: Refrigerator,
+  strip: PlugZap,
+  house: HousePlug,
+  panel: BellRing,
+  smoke: AlarmSmoke,
   board: CircuitBoard,
   sensor: Radar,
   component: Component,

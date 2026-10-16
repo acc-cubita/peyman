@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { cx } from "@/lib/cx";
-import type { Category } from "@/lib/types";
+import { groups } from "@/lib/site";
+import type { Category, CategoryGroup } from "@/lib/types";
 import { saveProduct, type ProductFormState } from "./actions";
 import type { ProductFormField, ProductFormValues } from "./product-form-schema";
 
@@ -17,6 +18,8 @@ const emptyValues: ProductFormValues = {
   price: "",
   compareAtPrice: "",
   stock: "0",
+  // Left empty on purpose: the admin decides, rather than inheriting a default.
+  warrantyMonths: "",
   summary: "",
   description: "",
   highlights: "",
@@ -58,21 +61,21 @@ export function ProductForm({
 
       <Section title="اطلاعات اصلی">
         <Field label="نام محصول" name="name" error={errors.name} wide>
-          <input {...field("name")} required className={inputClass} placeholder="برد توسعه ESP32 DevKit V1" />
+          <input {...field("name")} required className={inputClass} placeholder="محافظ یخچال و فریزر مدل VP-110" />
         </Field>
         <Field label="نام لاتین / مدل" name="nameEn" error={errors.nameEn}>
-          <input {...field("nameEn")} dir="ltr" required className={cx(inputClass, "text-start")} placeholder="ESP32 DevKit V1" />
+          <input {...field("nameEn")} dir="ltr" required className={cx(inputClass, "text-start")} placeholder="VP-110 Refrigerator Protector" />
         </Field>
         <Field label="برند" name="brand" error={errors.brand}>
-          <input {...field("brand")} dir="ltr" required className={cx(inputClass, "text-start")} placeholder="Espressif" />
+          <input {...field("brand")} dir="ltr" required className={cx(inputClass, "text-start")} placeholder="Peyman Elec" />
         </Field>
         <Field label="دسته‌بندی" name="category" error={errors.category}>
           <select {...field("category")} required className={inputClass}>
             <option value="" disabled>
               انتخاب کنید
             </option>
-            {(["digital", "components"] as const).map((group) => (
-              <optgroup key={group} label={group === "digital" ? "کالای دیجیتال" : "قطعات و ابزار"}>
+            {(Object.keys(groups) as CategoryGroup[]).map((group) => (
+              <optgroup key={group} label={groups[group].name}>
                 {categories
                   .filter((c) => c.group === group)
                   .map((c) => (
@@ -85,7 +88,7 @@ export function ProductForm({
           </select>
         </Field>
         <Field label="کد کالا (SKU)" name="sku" error={errors.sku}>
-          <input {...field("sku")} dir="ltr" required className={cx(inputClass, "text-start font-mono uppercase")} placeholder="PE-2105" />
+          <input {...field("sku")} dir="ltr" required className={cx(inputClass, "text-start font-mono uppercase")} placeholder="VP-110" />
         </Field>
         {product ? (
           <Field label="نشانی صفحه" name="slug" hint="بعد از ساخت تغییر نمی‌کند" wide>
@@ -95,20 +98,23 @@ export function ProductForm({
           </Field>
         ) : (
           <Field label="نشانی صفحه (اختیاری)" name="slug" hint="خالی بماند، از نام لاتین ساخته می‌شود" error={errors.slug} wide>
-            <input {...field("slug")} dir="ltr" className={cx(inputClass, "text-start font-mono")} placeholder="esp32-devkit-v1" />
+            <input {...field("slug")} dir="ltr" className={cx(inputClass, "text-start font-mono")} placeholder="refrigerator-protector-vp-110" />
           </Field>
         )}
       </Section>
 
-      <Section title="قیمت و موجودی">
+      <Section title="قیمت، موجودی و گارانتی">
         <Field label="قیمت (تومان)" name="price" error={errors.price}>
-          <input {...field("price")} dir="ltr" inputMode="numeric" required className={cx(inputClass, "text-start font-mono")} placeholder="520000" />
+          <input {...field("price")} dir="ltr" inputMode="numeric" required className={cx(inputClass, "text-start font-mono")} placeholder="890000" />
         </Field>
         <Field label="قیمت قبل از تخفیف (اختیاری)" name="compareAtPrice" error={errors.compareAtPrice}>
           <input {...field("compareAtPrice")} dir="ltr" inputMode="numeric" className={cx(inputClass, "text-start font-mono")} />
         </Field>
         <Field label="موجودی انبار" name="stock" hint="صفر یعنی ناموجود" error={errors.stock}>
           <input {...field("stock")} dir="ltr" inputMode="numeric" required className={cx(inputClass, "text-start font-mono")} />
+        </Field>
+        <Field label="گارانتی (ماه)" name="warrantyMonths" hint="۶۰ یعنی پنج سال؛ صفر یعنی بدون گارانتی" error={errors.warrantyMonths}>
+          <input {...field("warrantyMonths")} dir="ltr" inputMode="numeric" required className={cx(inputClass, "text-start font-mono")} placeholder="60" />
         </Field>
       </Section>
 
@@ -120,10 +126,10 @@ export function ProductForm({
           <textarea {...field("description")} rows={5} required className={cx(inputClass, "h-auto py-3 leading-7")} />
         </Field>
         <Field label="ویژگی‌های برجسته" name="highlights" hint="هر ویژگی در یک خط، حداکثر ۸" error={errors.highlights} wide>
-          <textarea {...field("highlights")} rows={4} className={cx(inputClass, "h-auto py-3 leading-7")} placeholder={"Wi-Fi و Bluetooth داخلی\nسازگار با Arduino IDE"} />
+          <textarea {...field("highlights")} rows={4} className={cx(inputClass, "h-auto py-3 leading-7")} placeholder={"تأخیر سه‌دقیقه‌ای پیش از وصل دوباره\nجذب ضربه‌های ولتاژ"} />
         </Field>
         <Field label="مشخصات فنی" name="specs" hint="هر ردیف در یک خط: عنوان | مقدار" error={errors.specs} wide>
-          <textarea {...field("specs")} rows={7} className={cx(inputClass, "h-auto py-3 leading-7")} placeholder={"ولتاژ کاری | ۳٫۳ ولت\nحافظه فلش | ۴ مگابایت"} />
+          <textarea {...field("specs")} rows={7} className={cx(inputClass, "h-auto py-3 leading-7")} placeholder={"ولتاژ نامی | ۲۲۰ ولت، ۵۰ هرتز\nجریان نامی | ۱۶ آمپر"} />
         </Field>
       </Section>
 

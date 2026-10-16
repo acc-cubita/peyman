@@ -1,11 +1,12 @@
-export type CategoryGroup = "digital" | "components";
+/** Products the store makes itself, and third-party parts and tools it resells. */
+export type CategoryGroup = "manufactured" | "components";
 
 export type IconKey =
-  | "smartphone"
-  | "laptop"
-  | "headphones"
-  | "watch"
-  | "battery"
+  | "fridge"
+  | "strip"
+  | "house"
+  | "panel"
+  | "smoke"
   | "board"
   | "sensor"
   | "component"
@@ -20,6 +21,8 @@ export type Category = {
   tagline: string;
   /** Intro paragraph shown above the product grid. */
   intro: string;
+  /** Categories whose products are suggested next, before the rest of the group. */
+  related?: readonly string[];
 };
 
 export type Spec = readonly [label: string, value: string];
@@ -40,6 +43,8 @@ export type Product = {
   stock: number;
   rating: number;
   reviewCount: number;
+  /** Warranty length in months; 0 when none is offered. */
+  warrantyMonths: number;
   summary: string;
   description: string;
   highlights: readonly string[];

@@ -42,7 +42,7 @@ async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searc
         <p className="rounded-2xl bg-surface p-8 leading-8 text-muted ring-1 ring-line">
           کالایی با این عبارت پیدا نشد. نام برند، مدل یا کد قطعه را امتحان کنید؛ مثلاً
           <span dir="ltr" className="mx-1 font-mono text-ink">ESP32</span>یا
-          <span className="mx-1 text-ink">هدفون</span>.
+          <span className="mx-1 text-ink">محافظ یخچال</span>.
         </p>
       ) : (
         <ProductGrid products={results} />

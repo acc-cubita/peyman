@@ -4,8 +4,8 @@ import type { Product } from "@/lib/types";
 import { CategoryIcon } from "./category-icon";
 
 /**
- * Stand-in product visual until real photos exist: digital goods sit on
- * graph paper, components on perfboard, each tagged with its SKU like a
+ * Stand-in product visual until real photos exist: the store's own products
+ * sit on graph paper, components on perfboard, each tagged with its SKU like a
  * silkscreen label.
  */
 export function ProductArt({

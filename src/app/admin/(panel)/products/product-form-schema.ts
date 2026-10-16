@@ -17,6 +17,7 @@ export type ProductFormField =
   | "price"
   | "compareAtPrice"
   | "stock"
+  | "warrantyMonths"
   | "summary"
   | "description"
   | "highlights"
@@ -60,6 +61,7 @@ export function valuesFromProduct(product: Product): ProductFormValues {
     price: String(product.price),
     compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
     stock: String(product.stock),
+    warrantyMonths: String(product.warrantyMonths),
     summary: product.summary,
     description: product.description,
     highlights: product.highlights.join("\n"),
@@ -81,6 +83,7 @@ export function productFormValues(formData: FormData): ProductFormValues {
     price: text("price"),
     compareAtPrice: text("compareAtPrice"),
     stock: text("stock"),
+    warrantyMonths: text("warrantyMonths"),
     summary: text("summary"),
     description: text("description"),
     highlights: text("highlights"),
@@ -113,6 +116,10 @@ export function parseProductForm(values: ProductFormValues, { creating }: { crea
     errors.compareAtPrice = "قیمت قبل از تخفیف باید از قیمت فعلی بیشتر باشد؛ اگر تخفیف ندارد خالی بگذارید.";
   }
   if (stock === null || Number.isNaN(stock) || stock > 100_000) errors.stock = "موجودی را به عدد وارد کنید (صفر یعنی ناموجود).";
+  const warrantyMonths = parseAmount(values.warrantyMonths);
+  if (warrantyMonths === null || Number.isNaN(warrantyMonths) || warrantyMonths > 240) {
+    errors.warrantyMonths = "مدت گارانتی را به ماه وارد کنید؛ مثلاً ۶۰ برای پنج سال، یا صفر اگر گارانتی ندارد.";
+  }
 
   if (!between(values.summary, 10, 200)) errors.summary = "خلاصه باید بین ۱۰ تا ۲۰۰ نویسه باشد.";
   if (!between(values.description, 20, 3000)) errors.description = "معرفی باید بین ۲۰ تا ۳۰۰۰ نویسه باشد.";
@@ -146,6 +153,7 @@ export function parseProductForm(values: ProductFormValues, { creating }: { crea
     price: price!,
     compareAtPrice: compareAtPrice ?? undefined,
     stock: stock!,
+    warrantyMonths: warrantyMonths!,
     summary: values.summary,
     description: values.description,
     highlights,

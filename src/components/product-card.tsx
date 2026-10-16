@@ -1,7 +1,10 @@
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { warrantyLabel } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { PriceTag } from "./price-tag";
 import { ProductArt } from "./product-art";
+import { ProductName } from "./product-name";
 import { Rating } from "./rating";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -25,9 +28,15 @@ export function ProductCard({ product }: { product: Product }) {
           {product.brand}
         </p>
         <h3 className="line-clamp-2 text-sm leading-7 font-medium text-ink group-hover:text-board">
-          {product.name}
+          <ProductName name={product.name} />
         </h3>
         <Rating value={product.rating} count={product.reviewCount} />
+        {product.warrantyMonths > 0 && (
+          <p className="flex items-center gap-1.5 text-xs text-board">
+            <ShieldCheck aria-hidden className="size-3.5 shrink-0" />
+            {warrantyLabel(product.warrantyMonths)}
+          </p>
+        )}
         <div className="mt-auto pt-3">
           {soldOut ? (
             <p className="text-end text-sm text-muted">فعلاً موجود نیست</p>

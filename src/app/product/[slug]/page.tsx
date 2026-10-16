@@ -8,10 +8,11 @@ import { JsonLd } from "@/components/json-ld";
 import { PriceTag } from "@/components/price-tag";
 import { ProductArt } from "@/components/product-art";
 import { ProductGrid } from "@/components/product-card";
+import { ProductName } from "@/components/product-name";
 import { Rating } from "@/components/rating";
 import { SectionHeading } from "@/components/section-heading";
 import { categoryOf, getProduct, getProducts, getRelatedProducts } from "@/lib/catalog";
-import { faNumber } from "@/lib/format";
+import { faNumber, warrantyLabel } from "@/lib/format";
 import { groups, site } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
@@ -54,6 +55,7 @@ function productSchema(product: Product) {
     description: product.description,
     sku: product.sku,
     brand: { "@type": "Brand", name: product.brand },
+    ...(product.brand === site.nameEn && { manufacturer: { "@type": "Organization", name: site.name, url: site.url } }),
     url,
     additionalProperty: product.specs.map(([name, value]) => ({ "@type": "PropertyValue", name, value })),
     ...(product.reviewCount > 0 && {
@@ -68,6 +70,12 @@ function productSchema(product: Product) {
       itemCondition: "https://schema.org/NewCondition",
       availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       seller: { "@type": "Organization", name: site.name },
+      ...(product.warrantyMonths > 0 && {
+        warranty: {
+          "@type": "WarrantyPromise",
+          durationOfWarranty: { "@type": "QuantitativeValue", value: product.warrantyMonths, unitCode: "MON" },
+        },
+      }),
     },
   };
 }
@@ -111,9 +119,17 @@ async function ProductDetail({ params }: Pick<Props, "params">) {
               کد کالا: <span dir="ltr" className="font-mono tracking-wider text-ink">{product.sku}</span>
             </span>
           </p>
-          <h1 className="mt-2 text-2xl leading-[1.6] font-bold text-ink sm:text-3xl sm:leading-[1.6]">{product.name}</h1>
+          <h1 className="mt-2 text-2xl leading-[1.6] font-bold text-ink sm:text-3xl sm:leading-[1.6]">
+            <ProductName name={product.name} />
+          </h1>
           <p dir="ltr" className="mt-1 text-end font-mono text-sm text-muted">{product.nameEn}</p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {product.warrantyMonths > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-board/10 px-3 py-1 text-xs font-medium text-board">
+                <ShieldCheck aria-hidden className="size-4" />
+                {warrantyLabel(product.warrantyMonths)}
+              </span>
+            )}
             <Rating value={product.rating} count={product.reviewCount} />
           </div>
 
@@ -140,7 +156,9 @@ async function ProductDetail({ params }: Pick<Props, "params">) {
             <ul className="mt-2 space-y-2 border-t border-line pt-4 text-xs text-muted">
               <li className="flex items-center gap-2">
                 <ShieldCheck aria-hidden className="size-4 text-board" />
-                ضمانت اصالت کالا و فاکتور رسمی
+                {product.warrantyMonths > 0
+                  ? `${warrantyLabel(product.warrantyMonths)} ${site.name}`
+                  : "ضمانت اصالت کالا و فاکتور رسمی"}
               </li>
               <li className="flex items-center gap-2">
                 <Truck aria-hidden className="size-4 text-board" />

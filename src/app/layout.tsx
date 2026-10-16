@@ -30,7 +30,7 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} | کالای دیجیتال، قطعات و ابزار الکترونیک`,
+    default: `${site.name} | محافظ برق، اعلام حریق و قطعات الکترونیک`,
     template: `%s | ${site.name}`,
   },
   description: site.description,

@@ -49,8 +49,8 @@ const migrations: Migration[] = [
       CREATE INDEX orders_created_at ON orders(created_at);
     `),
 
-  // 2 — products, seeded once from the sample catalog
-  (db) => {
+  // 2 — products (sample products are added by migration 3)
+  (db) =>
     db.exec(`
       CREATE TABLE products (
         slug             TEXT PRIMARY KEY,
@@ -75,21 +75,41 @@ const migrations: Migration[] = [
         updated_at       TEXT NOT NULL
       );
       CREATE INDEX products_category ON products(category, position);
+    `),
+
+  // 3 — the store makes its own power protectors and fire alarm equipment and
+  // no longer resells digital goods. Products get a warranty, and the sample
+  // ratings, which were made up, are cleared.
+  (db) => {
+    db.exec(`
+      ALTER TABLE products ADD COLUMN warranty_months INTEGER NOT NULL DEFAULT 0 CHECK (warranty_months >= 0);
+      DELETE FROM products WHERE category IN ('mobile', 'laptop', 'audio', 'wearables', 'accessories');
+      UPDATE products SET rating = 0, review_count = 0;
     `);
-    const insert = db.prepare(`
-      INSERT INTO products (slug, sku, name, name_en, brand, category, price, compare_at_price, stock, rating,
-                            review_count, summary, description, highlights, specs, featured, active, position,
-                            created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`);
-    sampleProducts.forEach((p, index) =>
-      insert.run(
-        p.slug, p.sku, p.name, p.nameEn, p.brand, p.category, p.price, p.compareAtPrice ?? null, p.stock,
-        p.rating, p.reviewCount, p.summary, p.description, JSON.stringify(p.highlights), JSON.stringify(p.specs),
-        p.featured ? 1 : 0, index, p.updatedAt, p.updatedAt,
-      ),
-    );
+    seedEmptyCategories(db);
   },
 ];
+
+/** Adds the sample products of every category that has no products yet. */
+function seedEmptyCategories(db: DatabaseSync) {
+  const filled = new Set(
+    (db.prepare("SELECT DISTINCT category FROM products").all() as Array<{ category: string }>).map((r) => r.category),
+  );
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO products (slug, sku, name, name_en, brand, category, price, compare_at_price, stock,
+                                    warranty_months,
+                          summary, description, highlights, specs, featured, active, position, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`);
+  const now = new Date().toISOString();
+  sampleProducts.forEach((p, index) => {
+    if (filled.has(p.category)) return;
+    insert.run(
+      p.slug, p.sku, p.name, p.nameEn, p.brand, p.category, p.price, p.compareAtPrice ?? null, p.stock,
+      p.warrantyMonths ?? 0, p.summary, p.description, JSON.stringify(p.highlights), JSON.stringify(p.specs),
+      p.featured ? 1 : 0, index, now, now,
+    );
+  });
+}
 
 let db: DatabaseSync | undefined;
 

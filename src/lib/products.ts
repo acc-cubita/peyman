@@ -20,6 +20,7 @@ type ProductRow = {
   stock: number;
   rating: number;
   review_count: number;
+  warranty_months: number;
   summary: string;
   description: string;
   highlights: string;
@@ -42,6 +43,7 @@ function toProduct(row: ProductRow): Product {
     stock: row.stock,
     rating: row.rating,
     reviewCount: row.review_count,
+    warrantyMonths: row.warranty_months,
     summary: row.summary,
     description: row.description,
     highlights: JSON.parse(row.highlights) as string[],
@@ -92,12 +94,13 @@ export function createProduct(input: ProductInput) {
       .prepare("SELECT COALESCE(MAX(position), -1) + 1 AS next FROM products WHERE category = ?")
       .get(input.category) as { next: number };
     db.prepare(
-      `INSERT INTO products (slug, sku, name, name_en, brand, category, price, compare_at_price, stock, summary,
-                             description, highlights, specs, featured, active, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products (slug, sku, name, name_en, brand, category, price, compare_at_price, stock,
+                             warranty_months, summary, description, highlights, specs, featured, active, position,
+                             created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       input.slug, input.sku, input.name, input.nameEn, input.brand, input.category, input.price,
-      input.compareAtPrice ?? null, input.stock, input.summary, input.description,
+      input.compareAtPrice ?? null, input.stock, input.warrantyMonths, input.summary, input.description,
       JSON.stringify(input.highlights), JSON.stringify(input.specs), input.featured ? 1 : 0,
       input.active ? 1 : 0, next, now, now,
     );
@@ -111,13 +114,13 @@ export function updateProduct(slug: string, input: Omit<ProductInput, "slug">) {
     assertUnique({ slug, sku: input.sku }, slug);
     db.prepare(
       `UPDATE products SET sku = ?, name = ?, name_en = ?, brand = ?, category = ?, price = ?, compare_at_price = ?,
-                           stock = ?, summary = ?, description = ?, highlights = ?, specs = ?, featured = ?,
-                           active = ?, updated_at = ?
+                           stock = ?, warranty_months = ?, summary = ?, description = ?, highlights = ?, specs = ?,
+                           featured = ?, active = ?, updated_at = ?
        WHERE slug = ?`,
     ).run(
       input.sku, input.name, input.nameEn, input.brand, input.category, input.price, input.compareAtPrice ?? null,
-      input.stock, input.summary, input.description, JSON.stringify(input.highlights), JSON.stringify(input.specs),
-      input.featured ? 1 : 0, input.active ? 1 : 0, new Date().toISOString(), slug,
+      input.stock, input.warrantyMonths, input.summary, input.description, JSON.stringify(input.highlights),
+      JSON.stringify(input.specs), input.featured ? 1 : 0, input.active ? 1 : 0, new Date().toISOString(), slug,
     );
   });
 }

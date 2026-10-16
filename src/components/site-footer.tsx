@@ -4,13 +4,13 @@ import { groups, site } from "@/lib/site";
 import { LogoMark } from "./logo-mark";
 
 export async function SiteFooter() {
-  const [digital, components] = await Promise.all([
-    getCategories("digital"),
+  const [manufactured, components] = await Promise.all([
+    getCategories("manufactured"),
     getCategories("components"),
   ]);
 
   const columns = [
-    { title: groups.digital.name, items: digital },
+    { title: groups.manufactured.name, items: manufactured },
     { title: groups.components.name, items: components },
   ];
 

@@ -68,18 +68,21 @@ export async function getFeaturedProducts(group: CategoryGroup) {
     .slice(0, 8);
 }
 
-/** Same-category products first, then the rest of the department. */
+/** Same-category products first, then the category's related ones, then the rest of the department. */
 export async function getRelatedProducts(slug: string, limit = 4) {
   "use cache";
   cached();
   const products = listProducts();
   const product = products.find((p) => p.slug === slug);
   if (!product) return [];
-  const group = categoryOf(product).group;
+  const { group, related = [] } = categoryOf(product);
   const others = products.filter((p) => p.slug !== slug && p.stock > 0);
   const sameCategory = others.filter((p) => p.category === product.category);
-  const sameGroup = others.filter((p) => p.category !== product.category && categoryOf(p).group === group);
-  return [...sameCategory, ...sameGroup].slice(0, limit);
+  const nearby = related.flatMap((category) => others.filter((p) => p.category === category));
+  const sameGroup = others.filter(
+    (p) => p.category !== product.category && !related.includes(p.category) && categoryOf(p).group === group,
+  );
+  return [...sameCategory, ...nearby, ...sameGroup].slice(0, limit);
 }
 
 /**

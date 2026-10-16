@@ -9,6 +9,7 @@ import { orderTotals } from "@/lib/pricing";
 import { site } from "@/lib/site";
 import type { CartCatalog } from "@/lib/types";
 import { CategoryIcon } from "./category-icon";
+import { ProductName } from "./product-name";
 
 export function CartView({ catalog }: { catalog: CartCatalog }) {
   const lines = useCartLines(catalog);
@@ -49,7 +50,7 @@ export function CartView({ catalog }: { catalog: CartCatalog }) {
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <Link href={`/product/${line.slug}`} className="line-clamp-2 text-sm leading-7 font-medium hover:text-board">
-                {line.name}
+                <ProductName name={line.name} />
               </Link>
               <p dir="ltr" className="text-end font-mono text-[11px] tracking-wider text-muted">{line.sku}</p>
               <div className="mt-auto flex flex-wrap items-center justify-between gap-3">

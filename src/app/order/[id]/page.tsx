@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { OrderStatusBadge } from "@/components/order-status-badge";
+import { ProductName } from "@/components/product-name";
 import { faNumber, formatDateTime, formatToman } from "@/lib/format";
 import { getOrder, type Order } from "@/lib/orders";
 import { site } from "@/lib/site";
@@ -139,7 +140,7 @@ function OrderSummary({ order }: { order: Order }) {
         {order.items.map((item) => (
           <li key={item.slug} className="flex justify-between gap-4 py-3 text-sm">
             <Link href={`/product/${item.slug}`} className="hover:text-board">
-              {item.name} <span className="text-muted">×{faNumber(item.qty)}</span>
+              <ProductName name={item.name} /> <span className="text-muted">×{faNumber(item.qty)}</span>
             </Link>
             <span className="shrink-0 tabular-nums">{formatToman(item.unitPrice * item.qty)}</span>
           </li>

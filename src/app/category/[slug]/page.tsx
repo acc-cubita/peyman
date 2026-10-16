@@ -111,12 +111,14 @@ async function CategoryListing({ params, searchParams }: Pick<Props, "params" | 
   if (all.length === 0) return null;
 
   const brands = [...new Set(all.map((p) => p.brand))].sort();
+  // Sorting by rating means nothing until some product has reviews.
+  const sorts = all.some((p) => p.reviewCount > 0) ? sortOptions : sortOptions.filter((o) => o.key !== "rating");
   const requestedBrand = first(query.brand);
   const requestedSort = first(query.sort);
   const listing: Listing = {
     brand: requestedBrand && brands.includes(requestedBrand) ? requestedBrand : undefined,
     inStock: first(query.stock) === "1",
-    sort: sortOptions.some((o) => o.key === requestedSort) ? (requestedSort as SortKey) : "featured",
+    sort: sorts.some((o) => o.key === requestedSort) ? (requestedSort as SortKey) : "featured",
   };
   const products = applyListing(all, listing);
   const filtered = Boolean(listing.brand || listing.inStock);
@@ -124,17 +126,19 @@ async function CategoryListing({ params, searchParams }: Pick<Props, "params" | 
   return (
     <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
       <aside aria-label="فیلتر محصولات" className="space-y-6 text-sm lg:sticky lg:top-6 lg:self-start">
-        <FilterGroup title="برند">
-          <FilterLink href={listingHref(slug, { ...listing, brand: undefined })} active={!listing.brand}>
-            همه برندها
-          </FilterLink>
-          {brands.map((brand) => (
-            <FilterLink key={brand} href={listingHref(slug, { ...listing, brand })} active={listing.brand === brand}>
-              <span dir="ltr">{brand}</span>
-              <span className="text-xs text-muted">{faNumber(all.filter((p) => p.brand === brand).length)}</span>
+        {brands.length > 1 && (
+          <FilterGroup title="برند">
+            <FilterLink href={listingHref(slug, { ...listing, brand: undefined })} active={!listing.brand}>
+              همه برندها
             </FilterLink>
-          ))}
-        </FilterGroup>
+            {brands.map((brand) => (
+              <FilterLink key={brand} href={listingHref(slug, { ...listing, brand })} active={listing.brand === brand}>
+                <span dir="ltr">{brand}</span>
+                <span className="text-xs text-muted">{faNumber(all.filter((p) => p.brand === brand).length)}</span>
+              </FilterLink>
+            ))}
+          </FilterGroup>
+        )}
         <FilterGroup title="وضعیت موجودی">
           <FilterLink href={listingHref(slug, { ...listing, inStock: !listing.inStock })} active={listing.inStock}>
             فقط کالاهای موجود
@@ -151,7 +155,7 @@ async function CategoryListing({ params, searchParams }: Pick<Props, "params" | 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted">{faNumber(products.length)} کالا</p>
           <nav aria-label="مرتب‌سازی" className="flex flex-wrap gap-1.5 text-sm">
-            {sortOptions.map((option) => (
+            {sorts.map((option) => (
               <Link
                 key={option.key}
                 href={listingHref(slug, { ...listing, sort: option.key })}
